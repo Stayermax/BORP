@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from DataPreprocessing import DataProcessingClass
 
 # Parsing script arguments
 parser = argparse.ArgumentParser(description='Process input')
