@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3b396a3d-1eac-4543-b4a0-4ec761e0f8d9" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/DataPreprocessing.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Training.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/predict.py" beforeDir="false" afterPath="$PROJECT_DIR$/predict.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataPreprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/DataPreprocessing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EDA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/EDA.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,7 +14,7 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/hw1$EDA.coverage" NAME="DataProcessing Coverage Results" MODIFIED="1588931523295" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hw1$predict.coverage" NAME="predict Coverage Results" MODIFIED="1588931756857" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/hw1$DataProcessing.coverage" NAME="DataPreprocessing Coverage Results" MODIFIED="1588960328448" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/hw1$DataProcessing.coverage" NAME="DataPreprocessing Coverage Results" MODIFIED="1588970137118" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
@@ -36,7 +34,7 @@
         <entry file="file://$PROJECT_DIR$/Training.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="408">
-              <caret line="17" column="32" lean-forward="true" selection-start-line="17" selection-start-column="32" selection-end-line="17" selection-end-column="32" />
+              <caret line="17" column="32" selection-start-line="17" selection-start-column="32" selection-end-line="17" selection-end-column="32" />
             </state>
           </provider>
         </entry>
@@ -44,17 +42,15 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/DataPreprocessing.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="384">
-              <caret line="275" column="29" lean-forward="true" selection-start-line="275" selection-start-column="29" selection-end-line="275" selection-end-column="29" />
+            <state relative-caret-position="-1263">
+              <caret line="65" column="57" selection-start-line="65" selection-start-column="57" selection-end-line="65" selection-end-column="57" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
                 <element signature="e#330#789#0" />
                 <element signature="e#1150#1278#0" />
-                <element signature="e#2148#2598#0" />
-                <element signature="e#2656#3595#0" />
                 <element signature="e#3515#3790#0" />
-                <marker date="1588960732086" expanded="true" signature="6942:7199" ph="..." />
-                <marker date="1588960732086" expanded="true" signature="8056:8804" ph="..." />
+                <marker date="1588972141002" expanded="true" signature="7139:7396" ph="..." />
+                <marker date="1588972141002" expanded="true" signature="8393:9141" ph="..." />
               </folding>
             </state>
           </provider>
@@ -134,7 +130,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>2WpWp9b108hizjHK</find>
       <find>crew</find>
       <find>credit_id</find>
       <find>ge</find>
@@ -164,6 +159,7 @@
       <find>revenue']</find>
       <find>Dalida</find>
       <find>type</find>
+      <find>10</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -369,12 +365,12 @@
       <option name="presentableId" value="Default" />
       <updated>1588581209126</updated>
       <workItem from="1588581211012" duration="2795000" />
-      <workItem from="1588888076415" duration="31541000" />
+      <workItem from="1588888076415" duration="38647000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="34336000" />
+    <option name="totallyTimeSpent" value="41442000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1920" height="1044" extended-state="6" />
@@ -385,7 +381,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32969433" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4994664" visible="true" weight="0.32969433" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4994664" visible="true" weight="0.32969433" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3995633" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -393,7 +389,7 @@
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.50053364" side_tool="true" weight="0.32969433" />
+      <window_info active="true" anchor="bottom" id="Event Log" order="10" sideWeight="0.50053364" side_tool="true" visible="true" weight="0.32969433" />
       <window_info anchor="bottom" id="Terminal" order="11" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -491,13 +487,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="17" column="32" lean-forward="true" selection-start-line="17" selection-start-column="32" selection-end-line="17" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.local/lib/python3.6/site-packages/pandas/core/indexing.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="194">
@@ -512,19 +501,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="17" column="32" selection-start-line="17" selection-start-column="32" selection-end-line="17" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/DataPreprocessing.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="384">
-          <caret line="275" column="29" lean-forward="true" selection-start-line="275" selection-start-column="29" selection-end-line="275" selection-end-column="29" />
+        <state relative-caret-position="-1263">
+          <caret line="65" column="57" selection-start-line="65" selection-start-column="57" selection-end-line="65" selection-end-column="57" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
             <element signature="e#330#789#0" />
             <element signature="e#1150#1278#0" />
-            <element signature="e#2148#2598#0" />
-            <element signature="e#2656#3595#0" />
             <element signature="e#3515#3790#0" />
-            <marker date="1588960732086" expanded="true" signature="6942:7199" ph="..." />
-            <marker date="1588960732086" expanded="true" signature="8056:8804" ph="..." />
+            <marker date="1588972141002" expanded="true" signature="7139:7396" ph="..." />
+            <marker date="1588972141002" expanded="true" signature="8393:9141" ph="..." />
           </folding>
         </state>
       </provider>

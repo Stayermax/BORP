@@ -63,7 +63,7 @@ class DataProcessingClass:
         topN = [el[0] for el in list(ordered_actorFilmNumber.items())[:N]]
         return topN
 
-    def __MostPopularFromField(self, field, threshold=3):
+    def __MostPopularFromField(self, field, threshold=3, topN = -1):
         res = {}
         for ids in self.data[field]:
             for id in ids:
@@ -79,9 +79,9 @@ class DataProcessingClass:
 
         return ordered_res
 
-    def profitFromField(self, field, threshold_profit = 0):
+    def profitFromField(self, field, threshold_profit = 0, topN = -1):
         """
-        Return dictionary of id:mean profit of id
+        Return dictionary of id:mean profit of id (topN of ids)
         :param field:
         :param threshold_profit:
         :return:
@@ -101,8 +101,8 @@ class DataProcessingClass:
             if (res[id]['profit']/res[id]['movies_num'] >= threshold_profit):
                 topIds[id] = res[id]['profit']/res[id]['movies_num']
 
-        ordered_res = OrderedDict(sorted(topIds.items(), key=lambda item: item[1], reverse=True))
-
+        ordered_res = OrderedDict(sorted(topIds.items(), key=lambda item: item[1], reverse=True)[:topN])
+        # print(f'Top keywords: {ordered_res}')
         return ordered_res
 
     def __generateAgentIdsDict(self, field):
@@ -136,6 +136,8 @@ class DataProcessingClass:
 
         # Revenue:
         self.data['revenue'] = pd.to_numeric(self.data['revenue'])
+        if(train == True):
+            self.data['logRevenue'] = self.data['revenue'].apply(math.log)
 
         to_deleted_rows = []
         if(train == True): # delete obviously not correct revenues
@@ -165,7 +167,7 @@ class DataProcessingClass:
         self.data['collectionID'] = self.data['belongs_to_collection'].apply(dictOrNaN)
         self.data['collectionID'] = self.data['collectionID'].apply(lambda x: x['id'])
         self.data['isInCollection'] = self.data['belongs_to_collection'].apply(dictOrNaN)
-        self.data['isInCollection'] = self.data['isInCollection'].apply(lambda x: x['id']!=-1)
+        self.data['isInCollection'] = self.data['isInCollection'].apply(lambda x: int(x['id']!=-1))
 
         # Year
         self.data['year'] = self.data['release_date'].apply(lambda x: x.split('-')[0])
@@ -198,6 +200,9 @@ class DataProcessingClass:
             dir_bins_N = 10
             step = (max_rev - min_rev) / dir_bins_N
             bins = np.arange(min_rev, max_rev, step)
+            # bins = np.arange(min_rev, max_rev-step, step)
+            # bins = np.append(bins, np.arange(max_rev-step, max_rev, step/3))
+
             self.data['directorCat'] = self.data['directorID'].apply(
                 lambda x: self.__getProfictCategory(self.directorProfit[x], bins))
         else:
@@ -219,10 +224,10 @@ class DataProcessingClass:
         self.data['profitableKeywordsIDs'] = self.data['Keywords'].apply(strIntoLoD)
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(getIDsFromListofDicts)
         if(train==True):
-            self.keywordProfit = self.profitFromField(field='profitableKeywordsIDs', threshold_profit=100000) # Keywords with biggest mean profits
+            self.keywordProfit = self.profitFromField(field='profitableKeywordsIDs', threshold_profit=100000, topN=1000) # Keywords with biggest mean profits
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.keywordProfit))
-        self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__topNfromField(x, self.keywordProfit, 30))
-
+        self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__topNfromField(x, self.keywordProfit, 14))
+        self.data['profitableKeywordsNum'] = self.data['profitableKeywordsIDs'].apply(len)
         # Top keywords printing:
 
         # topNkeyIds = [el[0] for el in list(self.keywordProfit.items())[:50]]
@@ -243,8 +248,8 @@ class DataProcessingClass:
         for col in to_delete_cols:
             self.data.drop(col, axis=1, inplace=True)
 
-        # # Show show_cols sorted by revenue
-        # show_cols = ['revenue', 'title', 'year','directorCat']
+        # Show show_cols sorted by revenue
+        # show_cols = ['revenue', 'title', 'year','directorCat','profitableKeywordsNum']
         # a = self.data.sort_values('revenue')[show_cols].values
         # for el in a:
         #     print(el)
@@ -268,7 +273,6 @@ def dictOrNaN(DoN):
 
 def strIntoLoD(string):
     """
-
     :param string: string format: [{'id': 14, 'name': 'Fantasy'}, {'id': 28, 'name': 'Action'}, {'id': 12, 'name': 'Adventure'}]
     :return:
     """
