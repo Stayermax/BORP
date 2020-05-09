@@ -5,6 +5,7 @@ import math
 from  copy import deepcopy
 from collections import OrderedDict
 from ast import literal_eval
+from sklearn.ensemble import RandomForestRegressor
 
 pd.set_option('display.width', 200)
 pd.set_option('display.max_columns', None)

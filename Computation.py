@@ -4,9 +4,9 @@ import numpy as np
 import pickle
 import os
 
-from sklearn.linear_model import LinearRegression, RidgeCV
+from sklearn.linear_model import LinearRegression, RidgeCV, Ridge
 from sklearn.svm import SVR
-
+from sklearn.ensemble import RandomForestRegressor
 
 # Model list:
 # 1) Base model - returns movie's year average revenue
@@ -16,6 +16,18 @@ from sklearn.svm import SVR
 # RMSLE is: 2.654178
 
 # 3) Second Model
+    # budget 6.86
+    # + popularity 6.88
+    # + vote_average 7.07
+    # - vote_average + vote_count 6.984
+    # + profitableKeywordsNum 6.919
+    # + topActorsNum year 7.02
+    # + 'month', 'genresIDs'
+
+# 4) Second model;RandomForestRegressor  2.148965
+#     + all features 2.058
+#     + depth 15 - random_state = 0 1.14
+#     + depth 25 , n_estimators = 200
 
 def generateFeatures(train_dp:DataPreprocessingClass, df, cont_features_list, category_list):
     X = []
@@ -97,8 +109,11 @@ class Model2(Model):
     def train(self, train_dp, load=True):
         self.Trained = True
         self.cont_features_list = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
-                               'profitableKeywordsNum', 'topActorsNum', 'year', 'month']
+                               'profitableKeywordsNum', 'topActorsNum', 'year']
         self.category_list = ['directorCat', 'month', 'genresIDs']
+        # self.cont_features_list = ['budget','popularity', 'vote_count', 'profitableKeywordsNum','topActorsNum', 'year']
+        #
+        # self.category_list = ['month', 'genresIDs']
         self.train_dp = train_dp
         model_path = 'pickle_saves/model_2.p'
         if (os.path.exists(model_path) and load):
@@ -106,19 +121,24 @@ class Model2(Model):
             self.model = pickle.load( open( model_path, "rb" ))
         else:
             X = generateFeatures(train_dp, train_dp.data, self.cont_features_list, self.category_list)
-            # print(X)
             y = list(train_dp.data['revenue'].values)
-            self.model = SVR(degree=1, C=1.0, epsilon=0.6).fit(X,y)
+            self.model = RandomForestRegressor(
+                                                max_depth=15,
+                                                random_state=0
+                                               # criterion=
+                                               ).fit(X,y)
+            # self.model = LinearRegression(fit_intercept=False).fit(X,y)
             # self.model = RidgeCV(alphas=np.logspace(0.5, 1, 25)).fit(X,y)
 
             pickle.dump(self.model, open(model_path, "wb"))
             print('Model 2 trained')
-        # print(f'Model coefs: {self.model.coef_}')
+        # print(f'Model coefs: {self.model.coef_, self.model.intercept_}')
 
     def predict(self, row):
         vals = generateFeatures(self.train_dp, row, self.cont_features_list, self.category_list)
-        # print(vals)
-        return self.model.predict(vals)[0]
+        pred = self.model.predict(vals)[0]
+        print(f'Prediction: {pred}')
+        return pred
 
 
 def predict(model, train_dp, row_df):
@@ -126,8 +146,9 @@ def predict(model, train_dp, row_df):
         model.train(train_dp)
     prediction = model.predict(row_df)
     if(prediction<0):
-        # print(row_df)
-        return train_dp.yearMeanRevenue[row_df['year'].values[0]]
+        return 0
+        # return train_dp.yearMeanRevenue[row_df['year'].values[0]]
+        # return
     else:
         return prediction
 
