@@ -14,20 +14,18 @@ class DataPreprocessingClass:
     def __init__(self, df, dpc = None):
         self.df = df   # initial data
         self.data = deepcopy(df) # clean data
-        self.genres_dict = self.__generateGenresDict()
+        self.genres_dict = self.__generateGenresDict()                  # Dict genre id: Genre name
         if(type(dpc)==type(self)): # test case
-            self.mostProfitableActors = dpc.mostProfitableActors
-            self.dir_bins       = dpc.dir_bins
-            self.yearMeanBudget = dpc.yearMeanBudget
-            self.yearMeanRevenue = dpc.yearMeanRevenue
-            self.directorProfit = dpc.directorProfit
-            self.topKeywords    = dpc.topKeywords
-            self.keywordProfit  = dpc.keywordProfit
-
+            self.mostProfitableActors = dpc.mostProfitableActors        # Ordered Dict actor id: actor mean proffit
+            self.dir_bins       = dpc.dir_bins                          # List directors bins by profit
+            self.yearMeanBudget = dpc.yearMeanBudget                    # Dict year: year mean budget
+            self.yearMeanRevenue = dpc.yearMeanRevenue                  # Dict year: year mean revenue
+            self.directorProfit = dpc.directorProfit                    # Dict director id : director mean profit
+            self.topKeywords    = dpc.topKeywords                       # Ordered Dict keyword id: keyword film number
+            self.keywordProfit  = dpc.keywordProfit                     # Ordered Dict keyword id: keyword mean profit
+            self.mostProductiveCompanies = dpc.mostProductiveCompanies  # Ordered Dict Company Id: Number of company films
+            self.companiesIds = dpc.companiesIds                        # Dict Company Id : Company Name
         self.dataCleaning(dpc==None)
-        # todo:
-        # for test predefine:
-
 
     def __generateGenresDict(self):
         """
@@ -184,8 +182,6 @@ class DataPreprocessingClass:
         self.data['year'] = self.data['release_date'].apply(lambda x: x.split('-')[0])
         self.data['year'] = pd.to_numeric(self.data["year"])
 
-
-
         # Month
         self.data['month'] = self.data['release_date'].apply(lambda x: x.split('-')[1])
         self.data['month'] = pd.to_numeric(self.data["month"])
@@ -200,15 +196,25 @@ class DataPreprocessingClass:
         self.data['budget'] = self.data[['year','budget']].apply(lambda x: averageIfZero(x[1], x[0], self.yearMeanBudget), axis = 1 ,raw=True)
 
 
+        # Companies: We took top 10 companies with the biggest number of films
+        self.data['companiesIDs'] = self.data['production_companies'].apply(strIntoLoD)
+        self.data['companiesIDs'] = self.data['companiesIDs'].apply(getIDsFromListofDicts)
+        if(train == True):
+            self.mostProductiveCompanies = self.__popularityFromField('companiesIDs', threshold=0, topN=10)
+            self.companiesIds = self.__generateAgentIdsDict(field='production_companies')
+        else:
+            # in case of test, mostProductiveCompanies should already be defined
+            pass
+        self.data['companiesIDs'] = self.data['companiesIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.mostProductiveCompanies))
 
+        # print(f'companies: {self.companiesIds}')
+        # print(f"PROD COMPS: {self.mostProductiveCompanies}")
 
         # Most Popular Actors
         self.data['castIDs'] = self.data['cast'].apply(strIntoLoD)
         self.data['castIDs'] = self.data['castIDs'].apply(getIDsFromListofDicts)
         if(train == True):
             self.mostProfitableActors = self.__profitFromField(field='castIDs', threshold_profit=0, topN = 20000) # Actors with the most number of movies
-            # print(f'top actors: {self.mostProfitableActors}')
-            # print(len(self.mostProfitableActors))
         else:
             # in case of test, topActors should already be defined
             pass
@@ -279,15 +285,15 @@ class DataPreprocessingClass:
                      'genres', 'production_companies', 'original_language',
                       'imdb_id', 'tagline', 'status',
                      'belongs_to_collection', 'release_date', 'original_title',
-                     'crew', 'cast', 'Keywords',
+                     'crew', 'cast', 'Keywords','production_countries',
                      # Can be used in the future vesions:
-                     'spoken_languages', 'overview', 'production_countries',  ]
+                     'spoken_languages', 'overview',  ]
 
         # Delete low data:
         for col in to_delete_cols:
             self.data.drop(col, axis=1, inplace=True)
 
-        # Show show_cols sorted by revenue
+        # # show_cols sorted by revenue
         # show_cols = ['revenue', 'title', 'year','directorCat','profitableKeywordsNum']
         # a = self.data.sort_values('revenue')[show_cols].values
         # for el in a:

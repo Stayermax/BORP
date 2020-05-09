@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import os
-
+import time
+from copy import deepcopy
 from sklearn.linear_model import LinearRegression, RidgeCV, Ridge
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -29,23 +30,28 @@ from sklearn.ensemble import RandomForestRegressor
 #     + depth 15 - random_state = 0 1.14
 #     + depth 25 , n_estimators = 200
 
-def generateFeatures(train_dp:DataPreprocessingClass, df, cont_features_list, category_list):
+def generateFeatures(train_dp:DataPreprocessingClass, df, cont_features_list, category_list, Train = False):
     X = []
+    Features_names = deepcopy(cont_features_list)
     for index, row in df.iterrows():
+        Features_names = deepcopy(cont_features_list)
         X.append(list(row[cont_features_list].values))
         # add year avrg revenue
         cur_year = row['year']
         while(cur_year not in train_dp.yearMeanRevenue.keys()):
             cur_year += 1
+        Features_names.append('yearMeanRevenue')
         X[-1].append(train_dp.yearMeanRevenue[cur_year])
         if('month' in category_list):
             for i in range(12):
+                Features_names.append(f'month_{i+1}')
                 if(row['month']==i+1):
                     X[-1].append(1)
                 else:
                     X[-1].append(0)
         if ('directorCat' in category_list):
-            for i in range(len(train_dp.dir_bins)-1):
+            for i in range(len(train_dp.dir_bins)):
+                Features_names.append(f'dirCat_{i}')
                 if (row['directorCat'] == i):
                     X[-1].append(1)
                 else:
@@ -54,103 +60,19 @@ def generateFeatures(train_dp:DataPreprocessingClass, df, cont_features_list, ca
             # print(f'row genres: {row["genresIDs"]}')
             # print(f'genres_dict: {train_dp.genres_dict.items()}')
             for i, id_genre in enumerate(train_dp.genres_dict.items()):
+                Features_names.append(f'genre_{id_genre[0]}')
                 if (id_genre[0] in row['genresIDs']):
                     X[-1].append(1)
                 else:
                     X[-1].append(0)
+        if('companiesIDs' in category_list):
+            for cid in train_dp.mostProductiveCompanies.keys():
+                Features_names.append(f'company_{cid}')
+                if (cid in row['companiesIDs']):
+                    X[-1].append(1)
+                else:
+                    X[-1].append(0)
     return X
-
-class Model():
-    def __init__(self):
-        self.Trained = False
-        pass
-
-    def train(self, train_dp):
-        self.Trained = True
-        pass
-
-    def predict(self, row):
-        pass
-
-class BaseModel(Model):
-    def train(self, train_dp):
-        self.Trained = True
-        self.train_dp = train_dp
-
-    def predict(self, row):
-        return self.train_dp.yearMeanRevenue[row['year']]
-
-class Model1(Model):
-    def train(self, train_dp, load=True):
-        self.Trained = True
-        self.cont_features_list = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
-                               'profitableKeywordsNum', 'topActorsNum', 'year', 'month']
-        self.category_list = ['directorCat', 'month', 'genresIDs']
-        self.train_dp = train_dp
-        model_path = 'pickle_saves/model_1.p'
-        if (os.path.exists() and load):
-            print('Model 1 loaded')
-            self.model = pickle.load( open(model_path, "rb" ))
-        else:
-            X = generateFeatures(train_dp, train_dp.data, self.cont_features_list, self.category_list)
-            y = list(train_dp.data['revenue'].values)
-
-            self.model = LinearRegression().fit(X,y)
-            pickle.dump(self.model, open(model_path, "wb"))
-            print('Model 1 trained')
-        print(f'Model coefs: {self.model.coef_}')
-
-
-    def predict(self, row):
-        vals = generateFeatures(self.train_dp, row, self.cont_features_list, self.category_list)
-        return self.model.predict(vals)[0]
-
-class Model2(Model):
-    def train(self, train_dp, load=True):
-        self.Trained = True
-        self.cont_features_list = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
-                               'profitableKeywordsNum', 'topActorsNum', 'year']
-        self.category_list = ['directorCat', 'month', 'genresIDs']
-        # self.cont_features_list = ['budget','popularity', 'vote_count', 'profitableKeywordsNum','topActorsNum', 'year']
-        #
-        # self.category_list = ['month', 'genresIDs']
-        self.train_dp = train_dp
-        model_path = 'pickle_saves/model_2.p'
-        if (os.path.exists(model_path) and load):
-            print('Model 2 loaded')
-            self.model = pickle.load( open( model_path, "rb" ))
-        else:
-            X = generateFeatures(train_dp, train_dp.data, self.cont_features_list, self.category_list)
-            y = list(train_dp.data['revenue'].values)
-            self.model = RandomForestRegressor(
-                                                max_depth=15,
-                                                random_state=0
-                                               # criterion=
-                                               ).fit(X,y)
-            # self.model = LinearRegression(fit_intercept=False).fit(X,y)
-            # self.model = RidgeCV(alphas=np.logspace(0.5, 1, 25)).fit(X,y)
-
-            pickle.dump(self.model, open(model_path, "wb"))
-            print('Model 2 trained')
-        # print(f'Model coefs: {self.model.coef_, self.model.intercept_}')
-
-    def predict(self, row):
-        vals = generateFeatures(self.train_dp, row, self.cont_features_list, self.category_list)
-        pred = self.model.predict(vals)[0]
-        print(f'Prediction: {pred}')
-        return pred
-
-
-def predict(model, train_dp, row_df):
-    if(model.Trained == False):
-        model.train(train_dp)
-    prediction = model.predict(row_df)
-    if(prediction<0):
-        return 0
-        # return train_dp.yearMeanRevenue[row_df['year'].values[0]]
-        # return
-    else:
-        return prediction
 
 ### Utility function to calculate RMSLE
 def rmsle(y_true, y_pred):
@@ -164,46 +86,136 @@ def rmsle(y_true, y_pred):
         ValueError("Mismatched dimensions between input vectors: {}, {}".format(y_true.shape, y_pred.shape))
     return np.sqrt((1/len(y_true)) * np.sum(np.power(np.log(y_true + 1) - np.log(y_pred + 1), 2)))
 
-def main(modelName = 'Second Model'):
+def predict(train_df, test_df):
     train_df = pd.read_csv('data/train.tsv', sep='\t')
-    if(os.path.exists('pickle_saves/train_dp.p')):
-        train_dp = pickle.load( open( 'pickle_saves/train_dp.p', "rb" ))
+    if (os.path.exists('pickle_saves/train_dp.pkl')):
+        train_dp = pickle.load(open('pickle_saves/train_dp.pkl', "rb"))
+        print('Train data loaded')
     else:
         train_dp = DataPreprocessingClass(train_df)
-        pickle.dump(train_dp, open('pickle_saves/train_dp.p', "wb"))
+        pickle.dump(train_dp, open('pickle_saves/train_dp.pkl', "wb"))
+        print('Train data evaluated')
 
     test_df = pd.read_csv('data/train.tsv', sep='\t')
-    if (os.path.exists('pickle_saves/test_dp.p')):
-        test_dp = pickle.load(open('pickle_saves/test_dp.p', "rb"))
+    if (os.path.exists('pickle_saves/test_dp.pkl')):
+        test_dp = pickle.load(open('pickle_saves/test_dp.pkl', "rb"))
+        print('Test data loaded')
     else:
         test_dp = DataPreprocessingClass(test_df, train_dp)
-        pickle.dump(train_dp, open('pickle_saves/test_dp.p', "wb"))
+        pickle.dump(train_dp, open('pickle_saves/test_dp.pkl', "wb"))
+        print('Test data evaluated')
 
-    if (modelName == 'Base Model'):
-        model = BaseModel()
-    elif (modelName == 'First Model'):
-        model = Model1()
-    elif (modelName == 'Second Model'):
-        model = Model2()
+    num_feats = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
+                 'profitableKeywordsNum', 'topActorsNum', 'year', 'month']
+    cat_feats = ['directorCat', 'month', 'genresIDs', 'companiesIDs']
 
-    prediction_df = pd.DataFrame(columns=['id', 'revenue'])
-    prediction_df['id'] = test_dp.data['id']
+    print('Features creation started')
+    clear_train_df = train_dp.data
+    clear_test_df = test_dp.data
 
-    pred_dict = {'id': [], 'rev':[], 'pred_rev':[]}
-    for index, row in test_dp.data.iterrows():
-        pred_dict['id'].append(row['id'])
-        pred_dict['rev'].append(row['revenue'])
-        pred_dict['pred_rev'].append(predict(model,train_dp, test_dp.data.loc[[index]]))
-        # if (pred_dict['pred_rev'][-1]<0):
-        #     print(pred_dict['pred_rev'][-1])
+    train_X_feat_path = 'pickle_saves/train_X_comp.pkl'
+    if (os.path.exists(train_X_feat_path)):
+        train_X = pickle.load(open(train_X_feat_path, "rb"))
+    else:
+        train_X = generateFeatures(train_dp, clear_train_df, num_feats, cat_feats)
+        pickle.dump(train_X, open(train_X_feat_path, "wb"))
+    train_y = list(train_dp.data['revenue'].values)
+
+    test_X_feat_path = 'pickle_saves/test_X_comp.pkl'
+    if (os.path.exists(test_X_feat_path)):
+        test_X = pickle.load(open(test_X_feat_path, "rb"))
+    else:
+        test_X = generateFeatures(train_dp, clear_test_df, num_feats, cat_feats)
+        pickle.dump(test_X, open(test_X_feat_path, "wb"))
+    test_y = list(clear_test_df['revenue'].values)
+
+    print('Features creation finished')
+
+    model = RandomForestRegressor(criterion='mae')
+    model_path = 'pickle_saves/RFR_comp.pkl'
+    if (os.path.exists(model_path)):
+        print('RFR model loaded')
+        model = pickle.load(open(model_path, "rb"))
+    else:
+        model.fit(train_X, train_y)
+        pickle.dump(model, open(model_path, "wb"))
+
+    pred_dict = {'id': [], 'rev': [], 'pred_rev': []}
+    pred_dict['id'] = list(clear_test_df['id'])
+    pred_dict['rev'] = list(clear_test_df['revenue'])
+    pred_dict['pred_rev'] = model.predict(test_X)
+
     prediction_df = pd.DataFrame.from_dict(pred_dict)
-    # pd.set_option('display.max_rows', 1000)
-    # print(prediction_df.head(1000))
-
     # ### Example - Calculating RMSLE
     res = rmsle(prediction_df['rev'], prediction_df['pred_rev'])
     print("RMSLE is: {:.6f}".format(res))
-    print(type(model))
+
+
+def main():
+    train_df = pd.read_csv('data/train.tsv', sep='\t')
+    if(os.path.exists('pickle_saves/train_dp.pkl')):
+        train_dp = pickle.load( open( 'pickle_saves/train_dp.pkl', "rb" ))
+        print('Train data loaded')
+    else:
+        train_dp = DataPreprocessingClass(train_df)
+        pickle.dump(train_dp, open('pickle_saves/train_dp.pkl', "wb"))
+        print('Train data evaluated')
+
+    test_df = pd.read_csv('data/train.tsv', sep='\t')
+    if (os.path.exists('pickle_saves/test_dp.pkl')):
+        test_dp = pickle.load(open('pickle_saves/test_dp.pkl', "rb"))
+        print('Test data loaded')
+    else:
+        test_dp = DataPreprocessingClass(test_df, train_dp)
+        pickle.dump(train_dp, open('pickle_saves/test_dp.pkl', "wb"))
+        print('Test data evaluated')
+
+
+    num_feats = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
+                               'profitableKeywordsNum', 'topActorsNum', 'year', 'month']
+    cat_feats = ['directorCat', 'month', 'genresIDs', 'companiesIDs']
+
+    print('Features creation started')
+    clear_train_df = train_dp.data
+    clear_test_df  = test_dp.data
+
+    train_X_feat_path = 'pickle_saves/train_X_comp.pkl'
+    if (os.path.exists(train_X_feat_path)):
+        train_X = pickle.load(open(train_X_feat_path, "rb"))
+    else:
+        train_X = generateFeatures(train_dp, clear_train_df, num_feats, cat_feats)
+        pickle.dump(train_X, open(train_X_feat_path, "wb"))
+    train_y = list(train_dp.data['revenue'].values)
+
+    test_X_feat_path = 'pickle_saves/test_X_comp.pkl'
+    if (os.path.exists(test_X_feat_path)):
+        test_X = pickle.load(open(test_X_feat_path, "rb"))
+    else:
+        test_X = generateFeatures(train_dp, clear_test_df, num_feats, cat_feats)
+        pickle.dump(test_X, open(test_X_feat_path, "wb"))
+    test_y = list(clear_test_df['revenue'].values)
+
+    print('Features creation finished')
+
+    model = RandomForestRegressor(criterion='mae')
+    model_path = 'pickle_saves/RFR_comp.pkl'
+    if (os.path.exists(model_path)):
+        print('RFR model loaded')
+        model = pickle.load(open(model_path, "rb"))
+    else:
+        model.fit(train_X, train_y)
+        pickle.dump(model, open(model_path, "wb"))
+
+    pred_dict = {'id': [], 'rev': [], 'pred_rev': []}
+    pred_dict['id'] = list(clear_test_df['id'])
+    pred_dict['rev'] = list(clear_test_df['revenue'])
+    pred_dict['pred_rev'] = model.predict(test_X)
+
+    prediction_df = pd.DataFrame.from_dict(pred_dict)
+    # ### Example - Calculating RMSLE
+    res = rmsle(prediction_df['rev'], prediction_df['pred_rev'])
+    print("RMSLE is: {:.6f}".format(res))
+
 
 if __name__ == '__main__':
     main()
