@@ -9,15 +9,24 @@ from ast import literal_eval
 pd.set_option('display.width', 200)
 pd.set_option('display.max_columns', None)
 
-class DataProcessingClass:
-    def __init__(self, df):
+class DataPreprocessingClass:
+    def __init__(self, df, dpc = None):
         self.df = df   # initial data
         self.data = deepcopy(df) # clean data
-        self.__initial_functions()
-
-    def __initial_functions(self):
         self.genres_dict = self.__generateGenresDict()
-        self.data = self.dataCleaning()
+        if(type(dpc)==type(self)): # test case
+            self.mostProfitableActors = dpc.mostProfitableActors
+            self.dir_bins       = dpc.dir_bins
+            self.yearMeanBudget = dpc.yearMeanBudget
+            self.yearMeanRevenue = dpc.yearMeanRevenue
+            self.directorProfit = dpc.directorProfit
+            self.topKeywords    = dpc.topKeywords
+            self.keywordProfit  = dpc.keywordProfit
+
+        self.dataCleaning(dpc==None)
+        # todo:
+        # for test predefine:
+
 
     def __generateGenresDict(self):
         """
@@ -63,7 +72,7 @@ class DataProcessingClass:
         topN = [el[0] for el in list(ordered_actorFilmNumber.items())[:N]]
         return topN
 
-    def __MostPopularFromField(self, field, threshold=3, topN = -1):
+    def __popularityFromField(self, field, threshold=3, topN = -1):
         res = {}
         for ids in self.data[field]:
             for id in ids:
@@ -79,7 +88,7 @@ class DataProcessingClass:
 
         return ordered_res
 
-    def profitFromField(self, field, threshold_profit = 0, topN = -1):
+    def __profitFromField(self, field, threshold_profit = 0, topN = -1):
         """
         Return dictionary of id:mean profit of id (topN of ids)
         :param field:
@@ -136,17 +145,17 @@ class DataProcessingClass:
 
         # Revenue:
         self.data['revenue'] = pd.to_numeric(self.data['revenue'])
-        if(train == True):
-            self.data['logRevenue'] = self.data['revenue'].apply(math.log)
+        self.data['logRevenue'] = self.data['revenue'].apply(math.log)
 
-        to_deleted_rows = []
+
         if(train == True): # delete obviously not correct revenues
+            to_deleted_rows = []
             for index, row in self.data.iterrows():
                 if(row['revenue'] <= 3465): # box office of Dalida, from train set
                     to_deleted_rows.append(index)
-        # Delete not unrepresentative rows
-        for row in to_deleted_rows:
-            self.data.drop(row, axis=0, inplace=True)
+            # Delete not unrepresentative rows
+            for row in to_deleted_rows:
+                self.data.drop(row, axis=0, inplace=True)
 
 
         columns = ['backdrop_path', 'belongs_to_collection', 'budget', 'genres', 'homepage', 'id', 'imdb_id',
@@ -154,6 +163,7 @@ class DataProcessingClass:
                    'production_companies', 'production_countries', 'release_date', 'revenue', 'runtime',
                    'spoken_languages', 'status', 'tagline', 'title', 'video', 'vote_average', 'vote_count', 'Keywords',
                    'cast', 'crew']
+
 
         # Genres
         self.data['genresIDs'] = self.data['genres'].apply(strIntoLoD)
@@ -173,62 +183,90 @@ class DataProcessingClass:
         self.data['year'] = self.data['release_date'].apply(lambda x: x.split('-')[0])
         self.data['year'] = pd.to_numeric(self.data["year"])
 
+
+
         # Month
         self.data['month'] = self.data['release_date'].apply(lambda x: x.split('-')[1])
         self.data['month'] = pd.to_numeric(self.data["month"])
+
+        # Budget and revenue by year:
+        if(train==True):
+            self.yearMeanBudget = {}
+            self.yearMeanRevenue = {}
+            for index, row in self.data[['year','budget', 'revenue']].groupby('year').mean().iterrows():
+                self.yearMeanBudget[index] = row['budget']
+                self.yearMeanRevenue[index] = row['revenue']
+        self.data['budget'] = self.data[['year','budget']].apply(lambda x: averageIfZero(x[1], x[0], self.yearMeanBudget), axis = 1 ,raw=True)
+
+
+
 
         # Most Popular Actors
         self.data['castIDs'] = self.data['cast'].apply(strIntoLoD)
         self.data['castIDs'] = self.data['castIDs'].apply(getIDsFromListofDicts)
         if(train == True):
-            self.topActors = self.__MostPopularFromField(field='castIDs', threshold=3) # Actors with the most number of movies
-        self.data['castIDs'] = self.data['castIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.topActors))
-        self.data['castIDs'] = self.data['castIDs'].apply(lambda x: self.__topNfromField(x, self.topActors, 3))
-        self.actorIds = self.__generateAgentIdsDict(field='cast')
-        #
+            self.mostProfitableActors = self.__profitFromField(field='castIDs', threshold_profit=0, topN = 20000) # Actors with the most number of movies
+            # print(f'top actors: {self.mostProfitableActors}')
+            # print(len(self.mostProfitableActors))
+        else:
+            # in case of test, topActors should already be defined
+            pass
+        self.data['castIDs'] = self.data['castIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.mostProfitableActors))
+        self.data['castIDs'] = self.data['castIDs'].apply(lambda x: self.__topNfromField(x, self.mostProfitableActors, 40))
+        self.data['topActorsNum'] = self.data['castIDs'].apply(len)
+        # self.actorIds = self.__generateAgentIdsDict(field='cast')
+
         # Director
         self.data['crew'] = self.data['crew'].apply(strIntoLoD)
         self.data['director'] = self.data['crew'].apply(getDirector, args=('name', ))
         self.data['directorID'] = self.data['crew'].apply(getDirector, args=('id', ))
-        self.directorIds = dict([(row['directorID'], row['director']) for index, row in self.data.iterrows()])
+        # self.directorIds = dict([(row['directorID'], row['director']) for index, row in self.data.iterrows()])
 
-        # Director categories: todo:
+        # Director categories:
         if(train):
             self.directorProfit = self.data.groupby('directorID').mean()['revenue'].to_dict()
             min_rev = min(self.directorProfit)
             max_rev = max(self.directorProfit)
             dir_bins_N = 10
             step = (max_rev - min_rev) / dir_bins_N
-            bins = np.arange(min_rev, max_rev, step)
-            # bins = np.arange(min_rev, max_rev-step, step)
-            # bins = np.append(bins, np.arange(max_rev-step, max_rev, step/3))
+            self.dir_bins = np.arange(min_rev, max_rev, step)
+            # dir_bins = np.arange(min_rev, max_rev-step, step)
+            # dir_bins = np.append(dir_bins, np.arange(max_rev-step, max_rev, step/3))
 
             self.data['directorCat'] = self.data['directorID'].apply(
-                lambda x: self.__getProfictCategory(self.directorProfit[x], bins))
+                lambda x: self.__getProfictCategory(self.directorProfit[x], self.dir_bins))
         else:
+            # In this case self.dir_bins_N should be already defined, as well as self.directorProfit
             self.data['directorCat'] = self.data['directorID'].apply(
-                lambda x: self.__getProfictCategory(self.directorProfit[x], bins) if(x in self.directorProfit.keys()) else 5)
+                lambda x: self.__getProfictCategory(self.directorProfit[x], self.dir_bins) if(x in self.directorProfit.keys()) else 5)
 
 
         # Most Popular keywords
         self.data['popularKeywordsIDs'] = self.data['Keywords'].apply(strIntoLoD)
         self.data['popularKeywordsIDs'] = self.data['popularKeywordsIDs'].apply(getIDsFromListofDicts)
         if(train == True):
-            self.topKeywords = self.__MostPopularFromField(field='popularKeywordsIDs', threshold=3) # Keywords with the most number of movies
+            self.topKeywords = self.__popularityFromField(field='popularKeywordsIDs', threshold=3) # Keywords with the most number of movies
+        else:
+            # In this case self.topKeywords should be predefined
+            pass
         self.data['popularKeywordsIDs'] = self.data['popularKeywordsIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.topKeywords))
         self.data['popularKeywordsIDs'] = self.data['popularKeywordsIDs'].apply(lambda x: self.__topNfromField(x, self.topKeywords, 20))
-        self.keywordsIds = self.__generateAgentIdsDict(field='Keywords')
-        # print(f'Keywords: {self.keywordsIds}')
+        # self.keywordsIds = self.__generateAgentIdsDict(field='Keywords')
+
 
         # Most Profitable Keywords
         self.data['profitableKeywordsIDs'] = self.data['Keywords'].apply(strIntoLoD)
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(getIDsFromListofDicts)
         if(train==True):
-            self.keywordProfit = self.profitFromField(field='profitableKeywordsIDs', threshold_profit=100000, topN=1000) # Keywords with biggest mean profits
+            self.keywordProfit = self.__profitFromField(field='profitableKeywordsIDs', threshold_profit=100000, topN=1000) # Keywords with biggest mean profits
+        else:
+            # In this case self.keywordProfit should be predefined
+            pass
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__removeUnpopularIds(x, self.keywordProfit))
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__topNfromField(x, self.keywordProfit, 14))
         self.data['profitableKeywordsNum'] = self.data['profitableKeywordsIDs'].apply(len)
-        # Top keywords printing:
+
+
 
         # topNkeyIds = [el[0] for el in list(self.keywordProfit.items())[:50]]
         # topNWords = []
@@ -264,6 +302,23 @@ def getDirector(LoD, nameOrId):
     else:
         return -1
 
+def averageIfZero(budget, year, yearAverageBudgetDict):
+    if(budget == 0):
+        if(year in yearAverageBudgetDict.keys()):
+            return yearAverageBudgetDict[year]
+        else:
+            closest_year_plus = year
+            closest_year_minus = year
+            while((closest_year_plus not in yearAverageBudgetDict.keys())
+            and (closest_year_minus not in yearAverageBudgetDict.keys())):
+                closest_year_plus += 1
+                closest_year_minus -= 1
+            if(closest_year_plus in yearAverageBudgetDict.keys()):
+                return yearAverageBudgetDict[closest_year_plus]
+            else:
+                return yearAverageBudgetDict[closest_year_minus]
+    else:
+        return budget
 
 def dictOrNaN(DoN):
     if(type(DoN)==type(8.5)):
@@ -299,7 +354,7 @@ def getIDsFromListofDicts(LoD):
 
 def main():
     df = pd.read_csv('data/train.tsv', sep='\t')
-    dp = DataProcessingClass(df)
+    dp = DataPreprocessingClass(df)
     # print(dp.data)
     # t = df.corr()
     # print(t)

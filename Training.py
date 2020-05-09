@@ -1,7 +1,7 @@
-from DataPreprocessing import DataProcessingClass
+from DataPreprocessing import DataPreprocessingClass
 
 class ModelTraining():
-    def __init__(self, dp: DataProcessingClass):
+    def __init__(self, dp: DataPreprocessingClass):
         self.data = dp.data
 
     def Model1(self):
@@ -15,7 +15,7 @@ class ModelTraining():
 
 def main():
     df = pd.read_csv('data/train.tsv', sep='\t')
-    dp = DataProcessingClass(df)
+    dp = DataPreprocessingClass(df)
     mt = ModelTraining(dp.data)
 
 if __name__ == '__main__':
