@@ -59,7 +59,6 @@ pred_dict['id'] = list(clear_test_df['id'])
 pred_dict['real_revenue'] = list(clear_test_df['revenue'])
 pred_dict['revenue'] = model.predict(test_X)
 
-
 prediction_df = pd.DataFrame.from_dict(pred_dict)
 res = rmsle(prediction_df['real_revenue'], prediction_df['revenue'])
 print("RMSLE is: {:.6f}".format(res))
