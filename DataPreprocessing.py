@@ -273,8 +273,6 @@ class DataPreprocessingClass:
         self.data['profitableKeywordsIDs'] = self.data['profitableKeywordsIDs'].apply(lambda x: self.__topNfromField(x, self.keywordProfit, 14))
         self.data['profitableKeywordsNum'] = self.data['profitableKeywordsIDs'].apply(len)
 
-
-
         # topNkeyIds = [el[0] for el in list(self.keywordProfit.items())[:50]]
         # topNWords = []
         # for wid in topNkeyIds:
@@ -293,11 +291,6 @@ class DataPreprocessingClass:
         for col in to_delete_cols:
             self.data.drop(col, axis=1, inplace=True)
 
-        # # show_cols sorted by revenue
-        # show_cols = ['revenue', 'title', 'year','directorCat','profitableKeywordsNum']
-        # a = self.data.sort_values('revenue')[show_cols].values
-        # for el in a:
-        #     print(el)
         return self.data
 
 def getDirector(LoD, nameOrId):
@@ -362,18 +355,5 @@ def getIDsFromListofDicts(LoD):
 def main():
     df = pd.read_csv('data/train.tsv', sep='\t')
     dp = DataPreprocessingClass(df)
-    # print(dp.data)
-    # t = df.corr()
-    # print(t)
-    # ds = df[['budget', 'popularity', 'revenue', 'vote_average', 'vote_count']]
-    #
-    # pd.plotting.scatter_matrix(ds, figsize=(8, 8))
-    # plt.show()
-    #
-    # plt.matshow(ds.corr())
-    # plt.xticks(range(len(ds.columns)), ds.columns)
-    # plt.yticks(range(len(ds.columns)), ds.columns)
-    # plt.colorbar()
-    # plt.show()
 if __name__ == '__main__':
     main()

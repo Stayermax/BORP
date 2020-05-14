@@ -5,8 +5,6 @@ import pickle
 import os
 import time
 from copy import deepcopy
-from sklearn.linear_model import LinearRegression, RidgeCV, Ridge
-from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 
 # Model list:
@@ -150,32 +148,35 @@ def predict(train_df, test_df):
     res = rmsle(prediction_df['rev'], prediction_df['pred_rev'])
     print("RMSLE is: {:.6f}".format(res))
 
-
 def main():
     train_df = pd.read_csv('data/train.tsv', sep='\t')
-    if(os.path.exists('pickle_saves/train_dp.pkl')):
-        train_dp = pickle.load( open( 'pickle_saves/train_dp.pkl', "rb" ))
+    dp_model_path = 'RandomForest models/dp_model.pkl'
+    if(os.path.exists(dp_model_path)):
+        train_dp = pickle.load( open(dp_model_path, "rb" ))
         print('Train data loaded')
     else:
         train_dp = DataPreprocessingClass(train_df)
-        pickle.dump(train_dp, open('pickle_saves/train_dp.pkl', "wb"))
+        pickle.dump(train_dp, open(dp_model_path, "wb"))
         print('Train data evaluated')
 
     test_df = pd.read_csv('data/train.tsv', sep='\t')
-    if (os.path.exists('pickle_saves/test_dp.pkl')):
-        test_dp = pickle.load(open('pickle_saves/test_dp.pkl', "rb"))
-        print('Test data loaded')
-    else:
-        test_dp = DataPreprocessingClass(test_df, train_dp)
-        pickle.dump(train_dp, open('pickle_saves/test_dp.pkl', "wb"))
-        print('Test data evaluated')
-
+    test_dp = DataPreprocessingClass(test_df, train_dp)
+    #
+    # if (os.path.exists('pickle_saves/test_dp.pkl')):
+    #     test_dp = pickle.load(open('pickle_saves/test_dp.pkl', "rb"))
+    #     print('Test data loaded')
+    # else:
+    #     test_dp = DataPreprocessingClass(test_df, train_dp)
+    #     pickle.dump(train_dp, open('pickle_saves/test_dp.pkl', "wb"))
+    #     print('Test data evaluated')
+    #
 
     num_feats = ['budget', 'popularity', 'vote_average', 'vote_count', 'isInCollection',
                                'profitableKeywordsNum', 'topActorsNum', 'year', 'month']
     cat_feats = ['directorCat', 'month', 'genresIDs', 'companiesIDs']
 
     print('Features creation started')
+
     clear_train_df = train_dp.data
     clear_test_df  = test_dp.data
 
@@ -188,11 +189,13 @@ def main():
     train_y = list(train_dp.data['revenue'].values)
 
     test_X_feat_path = 'pickle_saves/test_X_comp.pkl'
-    if (os.path.exists(test_X_feat_path)):
-        test_X = pickle.load(open(test_X_feat_path, "rb"))
-    else:
-        test_X = generateFeatures(train_dp, clear_test_df, num_feats, cat_feats)
-        pickle.dump(test_X, open(test_X_feat_path, "wb"))
+    test_X = generateFeatures(train_dp, clear_test_df, num_feats, cat_feats)
+    #
+    # if (os.path.exists(test_X_feat_path)):
+    #     test_X = pickle.load(open(test_X_feat_path, "rb"))
+    # else:
+    #     test_X = generateFeatures(train_dp, clear_test_df, num_feats, cat_feats)
+    #     pickle.dump(test_X, open(test_X_feat_path, "wb"))
     test_y = list(clear_test_df['revenue'].values)
 
     print('Features creation finished')
@@ -212,7 +215,6 @@ def main():
     pred_dict['pred_rev'] = model.predict(test_X)
 
     prediction_df = pd.DataFrame.from_dict(pred_dict)
-    # ### Example - Calculating RMSLE
     res = rmsle(prediction_df['rev'], prediction_df['pred_rev'])
     print("RMSLE is: {:.6f}".format(res))
 
